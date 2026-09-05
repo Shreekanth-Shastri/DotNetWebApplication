@@ -27,8 +27,6 @@ Returns current temperature, humidity, apparent temperature, precipitation, weat
 
 ## Tests and coverage
 
-Run the integration tests with the enforced 95% line and branch coverage threshold:
-
 ```powershell
 dotnet test .\DotNetWebApplication.Tests\DotNetWebApplication.Tests.csproj `
   --settings .\DotNetWebApplication.Tests\coverage.runsettings `
