@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whitefield Weather</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17324d;
+      --muted: #607489;
+      --sky: #eaf5f6;
+      --card: rgba(255, 255, 255, .82);
+      --line: rgba(23, 50, 77, .12);
+      --accent: #e47752;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Georgia, 'Times New Roman', serif;
+      background: radial-gradient(circle at 82% 8%, #f8d6ad 0 12%, transparent 33%),
+                  linear-gradient(135deg, #f8f5e9 0%, var(--sky) 52%, #d9e8ee 100%);
+    }
+    main { width: min(920px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0 56px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 36px; }
+    .eyebrow { margin: 0 0 12px; color: var(--accent); font: 700 12px/1.2 Arial, sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(42px, 7vw, 78px); font-weight: 400; line-height: .95; letter-spacing: 0; }
+    .coordinates { color: var(--muted); font: 13px/1.5 Arial, sans-serif; text-align: right; }
+    .weather-card { padding: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); box-shadow: 0 24px 60px rgba(52, 79, 93, .12); backdrop-filter: blur(10px); }
+    .current { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-bottom: 34px; border-bottom: 1px solid var(--line); }
+    .temperature { font-size: clamp(72px, 13vw, 132px); line-height: .85; font-weight: 400; }
+    .temperature small { font: 400 28px Arial, sans-serif; vertical-align: top; }
+    .condition { color: var(--muted); font: 16px/1.5 Arial, sans-serif; text-align: right; }
+    .condition strong { display: block; color: var(--ink); font: 400 32px Georgia, serif; margin-bottom: 4px; }
+    .details { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding-top: 28px; }
+    .detail-label { display: block; margin-bottom: 8px; color: var(--muted); font: 11px Arial, sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+    .detail-value { font: 22px Georgia, serif; }
+    .status { color: var(--muted); font: 13px Arial, sans-serif; margin-top: 18px; }
+    @media (max-width: 600px) {
+      main { width: min(100% - 28px, 920px); padding-top: 40px; }
+      header { display: block; }
+      .coordinates { text-align: left; margin-top: 18px; }
+      .weather-card { padding: 24px; }
+      .current { align-items: start; }
+      .condition { text-align: right; }
+      .condition strong { font-size: 23px; }
+      .details { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Live conditions</p>
+        <h1>Whitefield,<br>Bengaluru</h1>
+      </div>
+      <div class="coordinates">12.9698° N, 77.7499° E<br>Data by Open-Meteo</div>
+    </header>
+    <section class="weather-card" aria-live="polite">
+      <div class="current">
+        <div class="temperature"><span id="temperature">--</span><small>°C</small></div>
+        <div class="condition"><strong id="condition">Loading...</strong><span id="updated">Fetching current conditions</span></div>
+      </div>
+      <div class="details">
+        <div><span class="detail-label">Feels like</span><span class="detail-value" id="feels-like">--</span></div>
+        <div><span class="detail-label">Humidity</span><span class="detail-value" id="humidity">--</span></div>
+        <div><span class="detail-label">Wind</span><span class="detail-value" id="wind">--</span></div>
+        <div><span class="detail-label">Rain</span><span class="detail-value" id="rain">--</span></div>
+      </div>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+  <script>
+    const weatherLabels = { 0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Foggy', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy showers', 95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm' };
+    const setText = (id, value) => document.getElementById(id).textContent = value;
+
+    async function loadWeather() {
+      try {
+        const response = await fetch('/api/weather');
+        if (!response.ok) throw new Error('Weather request failed');
+        const data = await response.json();
+        const current = data.current;
+        setText('temperature', Math.round(current.temperature_2m));
+        setText('condition', weatherLabels[current.weather_code] || 'Current conditions');
+        setText('updated', current.is_day ? 'Daytime conditions' : 'Nighttime conditions');
+        setText('feels-like', `${Math.round(current.apparent_temperature)}°C`);
+        setText('humidity', `${current.relative_humidity_2m}%`);
+        setText('wind', `${Math.round(current.wind_speed_10m)} km/h`);
+        setText('rain', `${current.precipitation} mm`);
+        setText('status', `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+      } catch (error) {
+        setText('condition', 'Unavailable');
+        setText('updated', 'Unable to load current conditions');
+        setText('status', 'Check your connection and refresh the page.');
+      }
+    }
+
+    loadWeather();
+  </script>
+</body>
+</html>
