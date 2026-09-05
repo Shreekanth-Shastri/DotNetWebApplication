@@ -1,0 +1,26 @@
+## .NET build output
+[Bb]in/
+[Oo]bj/
+
+## Visual Studio and VS Code user files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Test results and coverage output
+TestResults/
+*.trx
+coverage/
+coverage.*
+
+## NuGet and tooling artifacts
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+## OS files
+.DS_Store
+Thumbs.db
